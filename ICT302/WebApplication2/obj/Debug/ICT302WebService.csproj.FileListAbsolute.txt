@@ -116,3 +116,4 @@ C:\Users\Josh\Documents\GitHub\ICT302\ICT302\WebApplication2\obj\Debug\ICT302Web
 C:\Users\Josh\Documents\GitHub\ICT302\ICT302\WebApplication2\obj\Debug\ICT302WebService.csproj.CopyComplete
 C:\Users\Josh\Documents\GitHub\ICT302\ICT302\WebApplication2\obj\Debug\WebApplication2.dll
 C:\Users\Josh\Documents\GitHub\ICT302\ICT302\WebApplication2\obj\Debug\WebApplication2.pdb
+C:\Users\Josh\Documents\GitHub\ICT302\ICT302\WebApplication2\obj\Debug\ICT302WebService.csprojAssemblyReference.cache

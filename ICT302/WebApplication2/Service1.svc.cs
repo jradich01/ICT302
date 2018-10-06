@@ -15,59 +15,77 @@ namespace ICT302WebService
 	[AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
 	public class Service1: IDisposable
 	{
-		// To use HTTP GET, add [WebGet] attribute. (Default ResponseFormat is WebMessageFormat.Json)
-		// To create an operation that returns XML,
-		//     add [WebGet(ResponseFormat=WebMessageFormat.Xml)],
-		//     and include the following line in the operation body:
-		//         WebOperationContext.Current.OutgoingResponse.ContentType = "text/xml";
 
-		//string conString = "Data Source=THEHIVE\\SQLEXPRESS2014;Initial Catalog=CurriculumMapper;Integrated Security=true;";
-		string conString = "Data Source #serverName#;Initial Catalog=#databaseName#;Integrated Security=true;";
+		string conString = "Data Source=MYSERVER\\SQLEXPRESS2014;Initial Catalog=CurriculumMapperv4;Integrated Security=true;";
 		SqlConnection con;
 
 
 		[OperationContract]
 		public string DoWork(string val)  //function that is exposed 
 		{
-			if (checkTableName(val)) //check if table exists 
-			{
-				return getTableData(val);  //if it does get the data
-			}
-			return "Error";
+			return getTableData(val);
+
 		}
 
-		public string getTableData(string tableName)
+		public string makeSQLString(string[] spParams)
 		{
-
-			List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
-			Dictionary<string, object> row;   //dictionary and list objects to convert to json
-			if (openConnection())   //open connection to database
+			string sql = "EXEC dbo." + spParams[0] + " ";
+			for(int i= 1; i<spParams.Length; i++)
 			{
-				SqlDataReader dr = executeCommand("SELECT * FROM " + tableName);  //execute command
-				while (dr.Read())
-				{
-					row = new Dictionary<string, object>();  //get the data and put it in dictionary object
-					for(int i = 0;i<dr.FieldCount; i++)
-					{ 
-						row.Add(dr.GetName(i), dr[i]);
-					}
-					rows.Add(row);
-				}
-				if (!dr.IsClosed)
-					dr.Close();
+				sql = sql + "@param" + i + "='" + spParams[i] + "',";
 			}
-			return JsonConvert.SerializeObject(rows);  //convert to json 
+			sql = sql.Substring(0, sql.Length - 1);
+
+			return sql;
+		}
+
+		public string getTableData(string paramsList)
+		{
+			Dictionary<string, object> tables = new Dictionary<string, object>();
+			string[] SQLParams = paramsList.Split(',');
+
+			foreach(string val in SQLParams)
+			{
+				string[] values = val.Split(':');
+
+				List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+				Dictionary<string, object> row;   //dictionary and list objects to convert to json
+				if (openConnection())   //open connection to database
+				{
+					if (checkTableName(values[0]))
+					{
+						SqlDataReader dr = executeCommand(makeSQLString(values));  //execute command
+						while (dr.Read())
+						{
+							row = new Dictionary<string, object>();  //get the data and put it in dictionary object
+							for (int i = 0; i < dr.FieldCount; i++)
+							{
+								row.Add(dr.GetName(i), dr[i]);
+							}
+							rows.Add(row);
+						}
+						tables.Add(values[0], rows);
+						if (!dr.IsClosed)
+							dr.Close();
+					}
+					else
+					{
+						tables.Add(values[0], "Error");
+					}
+				}
+			}
+			return JsonConvert.SerializeObject(tables);  //convert to json 
 
 		}
 
 		public bool checkTableName(string tableName)  //check table name first 
 		{
 			bool val = false;
-			string tableString = @"select TABLE_NAME from (
-				select TABLE_NAME from INFORMATION_SCHEMA.TABLES
-				union
-				select TABLE_NAME from INFORMATION_SCHEMA.VIEWS)a
-				where TABLE_NAME = '" + tableName +"'";
+
+			string tableString = @"select SPECIFIC_NAME 
+							from information_schema.routines 
+							where routine_type = 'PROCEDURE' and SPECIFIC_NAME = '"+tableName+"'";
+
 			if (openConnection())
 			{
 				SqlDataReader dr = executeCommand(tableString);
@@ -116,9 +134,16 @@ namespace ICT302WebService
 		public SqlDataReader executeCommand(string command)  //execute a command and return a dataReader object
 		{
 			openConnection();
-			SqlCommand cmd = new SqlCommand(command, con);
-			SqlDataReader dr = cmd.ExecuteReader();
-			return dr;
+			try
+			{
+				SqlCommand cmd = new SqlCommand(command, con);
+				SqlDataReader dr = cmd.ExecuteReader();
+				return dr;
+			}
+			catch(Exception e)
+			{
+				return null;
+			}
 
 		}
 
