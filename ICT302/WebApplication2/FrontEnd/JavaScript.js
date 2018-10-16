@@ -1,13 +1,22 @@
 ﻿$(function () {
 
     //startup
-    requestData("JobAndSKACount_SP:Application Software Developer:Computer Science,JobList_SP,CourseList_SP",
+    requestData("Strengths:Application Software Developer:Computer Science,Weakness:Application Software Developer:Computer Science,JobAndSKACount_SP:Application Software Developer:Cyber Security and forensics,JobList_SP,CourseList_SP",
         function (data) {
-            populateTable(data["JobAndSKACount_SP"]);
+          //  populateTable(data["JobAndSKACount_SP"]);
             buildChartData(data["JobAndSKACount_SP"]);
             populateDropdown("courseDropdown", data["CourseList_SP"], "CourseName");
             populateDropdown("jobDropdown", data["JobList_SP"], "JobName");
+            drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
+            drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
+            drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
+         //   populateWeaknessTable(data["Weakness"]);
+            getUnitRecommendations(data["Weakness"]);
         });
+
+
+   
+        
 
     // events
     $("#courseDropdown").on("change", function () {
@@ -23,9 +32,16 @@
     function getChartData() {
         var course = $("#courseDropdown").val();
         var job = $("#jobDropdown").val();
+        var line = "Strengths:" + job + ":" + course + ",Weakness:" + job + ":" + course
         requestData("JobAndSKACount_SP:" + job + ":" + course, function (data) {
-            populateTable(data["JobAndSKACount_SP"]);
+          //  populateTable(data["JobAndSKACount_SP"]);
             buildChartData(data["JobAndSKACount_SP"]);
+        });
+        requestData(line, function (data) {
+            drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
+            drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
+            drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
+            getUnitRecommendations(data["Weakness"]);
         });
 
     }
@@ -109,7 +125,6 @@
     }
 
     function buildChart(ds1, ds2) {
-
         var ctx = document.getElementById("myChart").getContext('2d');
         var myChart = new Chart(ctx, {
             type: 'radar',
@@ -172,6 +187,211 @@
         $("#myTable").html("");
         $("#myTable").append(htmlCode);  //apend html code to div element
 
+    }
+
+    function populateWeaknessTable(yeah) {
+        var colNames = Object.keys(yeah[0]);  // get column names
+        var htmlCode = "<table><tr>";           //build html code from cols and data
+        for (var i = 0; i < colNames.length; i++) {
+            htmlCode = htmlCode + "<th>" + colNames[i] + "</th>";
+        }
+        htmlCode = htmlCode + "</tr>";
+        for (var i = 0; i < yeah.length; i++) {
+            htmlCode = htmlCode + "<tr>";
+            var row = yeah[i];
+            for (var j = 0; j < colNames.length; j++) {
+                htmlCode = htmlCode + "<td>" + row[colNames[j]] + "</td>";
+            }
+            htmlCode = htmlCode + "</tr>";
+        }
+        htmlCode = htmlCode + "</table>"
+        $("#skillTable").html("");
+        $("#skillTable").append(htmlCode);  //apend html code to div elemen
+
+
+    } 
+    /*
+    function getUnitContributors(yeah) {
+        var labels = [];
+        var count = 0;
+        const m = new Map();
+        var colNames = Object.keys(yeah[0]);
+        for (var i = 0; i < yeah.length; i++) {
+            var row = yeah[i];
+            var ska = row[colNames[0]];
+            (function (var1) {
+                requestData("UnitContributors:" + row[colNames[0]], function (data) {
+                    if (data["UnitContributors"].length > 0) {
+                        for (var j = 0; j < data["UnitContributors"].length; j++) {
+                            var row2 = doStuff(data["UnitContributors"], j);
+                            if (m.has(row2)) {
+                                var arr2 = [];
+                                arr2 = m.get(row2);
+
+                                arr2.push(var1);
+                                m.set(row2, arr2);
+                            }
+                            else {
+                                var arr = [];
+                                arr.push(var1);
+                                m.set(row2, arr);
+                            }
+                        }
+
+                    }
+                    count++;
+                    console.log(count);
+                    if (count == yeah.length) {
+                        drawUnitTable(m,"#strengthsTable");
+                    }
+                });
+
+            })(ska);
+        }
+    }
+    */
+    function getUnitRecommendations(yeah) {
+        var labels = [];
+        var count = 0;
+        const m = new Map();
+        var colNames = Object.keys(yeah[0]);
+        for (var i = 0; i < yeah.length; i++) {
+            var row = yeah[i];
+            var ska = row[colNames[0]];
+            (function (var1){
+                requestData("UnitRecommendations:" + row[colNames[0]],  function (data) {
+                    if (data["UnitRecommendations"].length > 0) {
+                        for (var j = 0; j < data["UnitRecommendations"].length; j++) {
+                            var row2 = doStuff(data["UnitRecommendations"], j);
+                            if (m.has(row2)) {
+                                var arr2 = [];
+                                arr2 = m.get(row2);
+
+                                arr2.push(var1);
+                                m.set(row2, arr2);
+                            }
+                            else {
+                                var arr = [];
+                                arr.push(var1);
+                                m.set(row2, arr);
+                            }
+                        }
+
+                    }
+                    count++;
+                    if (count == yeah.length) {
+                        drawUnitTable(m,"#unitTable");
+                    }
+                });
+                    
+            })(ska);
+        }
+    }
+
+    function drawSkaTable(head, strengthData, weaknessData, tableName) {
+        var colNames = Object.keys(strengthData[0]);  // get column names
+        var colNames2 = Object.keys(weaknessData[0]);  // get column names
+        var max;
+        var c;
+        
+        var sLength = strengthData.length;
+        var wLength = weaknessData.length;
+        if (sLength > wLength) {
+            max = sLength
+        }
+            
+        else {
+            max = wLength;
+        }
+            
+        var sIter = -1;
+        var wIter = -1;
+        var htmlCode = "<table border=1>";
+        htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + head + "</th>";
+        htmlCode = htmlCode + "</tr></thead>";
+            
+        htmlCode = htmlCode + "<tr>";
+        htmlCode = htmlCode + "<th>Strengths</th>";
+        htmlCode = htmlCode + "<th>Weaknesses</th>";
+        htmlCode = htmlCode + "</tr>";
+        while ((sIter < max) && (wIter < max)) {
+            htmlCode = htmlCode + "<tr>";
+            if (sIter >= sLength) {
+                htmlCode = htmlCode + "<td>" + "" + "</td>";
+            }
+            else {
+                do {
+                    sIter++;
+                    if (sIter >= sLength) {
+                        break;
+                    }
+                    var s = strengthData[sIter];
+                } while (s[colNames[1]] != head); // While haven't found a SKILL or iterator is outside range || sIter < sLength
+
+                if (sIter >= sLength) {
+
+                    htmlCode = htmlCode + "<td>" + "" + "</td>";
+                }
+                else {
+                    htmlCode = htmlCode + "<td>" + s[colNames[0]] + "</td>";
+                }
+            }
+            
+            if (wIter >= wLength) {
+                htmlCode = htmlCode + "<td>" + "" + "</td>";
+            }
+            else {
+                do {
+                    wIter++;
+                    if (wIter >= wLength) {
+                        break;
+                    }
+                    var w = weaknessData[wIter];
+                } while (w[colNames2[1]] != head); // While haven't found a SKILL or iterator is outside range
+
+                if (wIter >= wLength) {
+                    htmlCode = htmlCode + "<td>" + "" + "</td>";
+                }
+                else
+                    htmlCode = htmlCode + "<td>" + w[colNames2[0]] + "</td>";
+            }
+            htmlCode = htmlCode + "</tr>";
+        }
+        htmlCode = htmlCode + "</table>";
+        $(tableName).html("");
+        $(tableName).append(htmlCode);  //apend html code to div elemen 
+
+    }
+
+    function drawUnitTable(m, tableName) {
+        var htmlCode = "<table style=border:1px solid #CCC;width:100%>" + "<tr>";           //build html code from cols and data
+        htmlCode = htmlCode + "<th>" + "Unit" + "</th>";
+        htmlCode = htmlCode + "<th>" + "Weakness" + "</th>";
+        htmlCode = htmlCode + "</tr>";
+        
+        for (const k of m.keys()) {
+            var text = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>" + "<a href=" + text + ">" + k + "</a>" + "</td>";
+            var arr = [];
+            arr = m.get(k);
+            htmlCode = htmlCode + "<td>";
+            for(var i = 0; i < arr.length; i++) {
+                htmlCode = htmlCode + arr[i] + "</br>";
+            }
+            htmlCode = htmlCode + "</td>";
+            htmlCode = htmlCode + "</tr>";
+        }
+        htmlCode = htmlCode + "</table>"
+        $(tableName).html("");
+        $(tableName).append(htmlCode);  //apend html code to div element 
+    }
+
+    function doStuff(yeah, i) {
+        var colNames = Object.keys(yeah[0]);
+            var row = yeah[i];
+        return row[colNames[0]];
+        
     }
 
 });

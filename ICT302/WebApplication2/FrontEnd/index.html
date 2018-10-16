@@ -12,21 +12,52 @@
 
 </head>
 <body>
-	<p>
-		<div id="myTable"></div>
-	</p>
-	<select id="jobDropdown"></select>
-	<select id="courseDropdown"> </select>
+    <p>
+        <div id="myTable"></div>
+
+    </p>
+    <div>
+        <font size="6"> 1. Please choose a course:</font>
+    </div>
+    <div style="margin-bottom: 100px;">
+        <select id="courseDropdown"> </select>
+    </div>
+    <div>
+        <font size="6">
+            2. Please choose a career:
+        </font>
+    </div>
+    <div >
+        <select id="jobDropdown"></select>
+    </div>
 
 
-	<canvas id="myChart"></canvas>
 
-	<style>
-		canvas {
-			width: 1100px !important;
-			height: 600px !important;
-		}
-	</style>
+
+    <canvas id="myChart"></canvas>
+    <div id="container" style="width:100%;overflow:auto;">
+        <div id="sTable" style="margin-left: 100px; margin-right: 100px; float:left">
+
+        </div>
+        <div id="aTable" style="float:left; margin-right: 100px;"></div>
+        <div id="kTable"></div>
+    </div>
+    <div id="container2" style="width:100%">
+        <div id="unitTable" style="margin-top: 100px;"></div>
+        <div id="strengthsTable" style="margin-top: 100px;"></div>
+    </div>
+
+    <style>
+        canvas {
+            width: 1100px !important;
+            height: 600px !important;
+        }
+        tbody {
+            overflow-y: scroll;
+            height: 200px;
+            display: block;
+        }
+    </style>
 
 </body>
 </html>
