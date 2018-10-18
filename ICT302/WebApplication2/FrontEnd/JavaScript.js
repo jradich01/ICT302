@@ -1,34 +1,105 @@
 ﻿$(function () {
-
     //startup
     requestData("Strengths:Application Software Developer:Computer Science,Weakness:Application Software Developer:Computer Science,JobAndSKACount_SP:Application Software Developer:Cyber Security and forensics,JobList_SP,CourseList_SP",
         function (data) {
-          //  populateTable(data["JobAndSKACount_SP"]);
             buildChartData(data["JobAndSKACount_SP"]);
             populateDropdown("courseDropdown", data["CourseList_SP"], "CourseName");
             populateDropdown("jobDropdown", data["JobList_SP"], "JobName");
             drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
             drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
             drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
-         //   populateWeaknessTable(data["Weakness"]);
-            getUnitRecommendations(data["Weakness"]);
         });
 
 
-   
-        
+
+
 
     // events
     $("#courseDropdown").on("change", function () {
         getChartData();
+        emptyTable();
     });
 
     $("#jobDropdown").on("change", function () {
         getChartData();
+        emptyTable();
     });
 
+    $("#sTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
 
-    //functions 
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+        
+    });
+
+    $("#kTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+
+    });
+
+    $("#aTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+    });
+
+    function emptyTable() {
+        var htmlCode = "<table border=1 class=fixed>";
+
+        htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + "Skill Name" + "</th>";
+        htmlCode = htmlCode + "</tr></thead>";
+        htmlCode = htmlCode + "<tr>";
+        htmlCode = htmlCode + "<td>Description: </td>";
+        htmlCode = htmlCode + "<td>" + "</td>";
+        htmlCode = htmlCode + "</tr>";
+        htmlCode = htmlCode + "<tr>";
+        htmlCode = htmlCode + "<td>Units that contributed to this SKA: </td>";
+        htmlCode = htmlCode + "</td></tr>";
+
+        htmlCode = htmlCode + "<tr>";
+        htmlCode = htmlCode + "<td>Units that can FURTHER contribute to this SKA: </td>";
+        htmlCode = htmlCode + "<td>";
+        htmlCode = htmlCode + "</td></tr>";
+
+        
+        htmlCode = htmlCode + "</table>";
+        $("#skillTable").html("");
+        $("#skillTable").append(htmlCode);  //apend html code to div element
+    }
+
     function getChartData() {
         var course = $("#courseDropdown").val();
         var job = $("#jobDropdown").val();
@@ -38,12 +109,121 @@
             buildChartData(data["JobAndSKACount_SP"]);
         });
         requestData(line, function (data) {
+
             drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
             drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
             drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
-            getUnitRecommendations(data["Weakness"]);
+       //     getUnitRecommendations(data["Weakness"]);
+          //  getUnitContributors(data["Strengths"], course);
+           
         });
 
+    }
+
+    function doAThing() {
+
+    }
+    function drawSkillTable(ska, ska_desc, course) {
+
+        
+
+        requestData("NonCourseContributors:" + ska + ":" + course +",UnitContributors:" + ska + ":" + course, function (data) {
+            var htmlCode = "<table border=1 class=fixed>";
+
+            htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
+            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Description: </td>";
+            htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
+            htmlCode = htmlCode + "</tr>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Units that contributed to this SKA: </td>";
+            const m = new Map();
+            if (data["UnitContributors"].length > 0) {
+                var colNames = Object.keys(data["UnitContributors"][0]);
+                for (var i = 0; i < data["UnitContributors"].length; i++) {
+                    var row = data["UnitContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID)) {
+                        m.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+
+                for (const k of m.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = m.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Units that can FURTHER contribute to this SKA: </td>";
+            const n = new Map();
+            if (data["NonCourseContributors"].length > 0) {
+                var colNames = Object.keys(data["NonCourseContributors"][0]);
+                for (var i = 0; i < data["NonCourseContributors"].length; i++) {
+                    var row = data["NonCourseContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID) && !n.has(unitID)) {
+                        n.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+                for (const k of n.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = n.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "</table>"
+            $("#skillTable").html("");
+            $("#skillTable").append(htmlCode);  //apend html code to div element
+        }); 
+    }
+
+    function drawWeaknessTable(ska, ska_desc, course) {
+        requestData("NonCourseContributors:" + ska + ":" + course, function (data) {
+            var htmlCode = "<table border=1 class=fixed>";
+
+            htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
+            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Description: </td>";
+            htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
+            htmlCode = htmlCode + "</tr>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>RECOMMENDED UNITS: </td>";
+            const m = new Map();
+            if (data["NonCourseContributors"].length > 0) {
+                var colNames = Object.keys(data["NonCourseContributors"][0]);
+                for (var i = 0; i < data["NonCourseContributors"].length; i++) {
+                    var row = data["NonCourseContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID)) {
+                        m.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+
+                for (const k of m.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = m.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "</table>"
+            $("#skillTable").html("");
+            $("#skillTable").append(htmlCode);  //apend html code to div element
+        });
     }
 
     function requestData(tableName, callback) {
@@ -210,26 +390,39 @@
 
 
     } 
-    /*
-    function getUnitContributors(yeah) {
+    
+    function getUnitContributors(yeah, course) {
         var labels = [];
         var count = 0;
         const m = new Map();
         var colNames = Object.keys(yeah[0]);
+        console.log(yeah.length);
         for (var i = 0; i < yeah.length; i++) {
+            console.log("no");
             var row = yeah[i];
             var ska = row[colNames[0]];
             (function (var1) {
-                requestData("UnitContributors:" + row[colNames[0]], function (data) {
+                requestData("UnitContributors:" + row[colNames[0]] + ":" + course, function (data) {
+                    console.log(data["UnitContributors"].length);
                     if (data["UnitContributors"].length > 0) {
                         for (var j = 0; j < data["UnitContributors"].length; j++) {
                             var row2 = doStuff(data["UnitContributors"], j);
                             if (m.has(row2)) {
                                 var arr2 = [];
                                 arr2 = m.get(row2);
-
-                                arr2.push(var1);
-                                m.set(row2, arr2);
+                                var true1 = 0;
+                                for (var k = 0; k < arr2.length; k++) {
+                                    if (arr2[k] == var1) {
+                                        true1 = 1;
+                                        console.log("ture");
+                                    }
+                                        
+                                }
+                                if (true1 != 1) {
+                                    console.log("false");
+                                    arr2.push(var1);
+                                    m.set(row2, arr2);
+                                }
                             }
                             else {
                                 var arr = [];
@@ -240,7 +433,7 @@
 
                     }
                     count++;
-                    console.log(count);
+                    
                     if (count == yeah.length) {
                         drawUnitTable(m,"#strengthsTable");
                     }
@@ -249,7 +442,30 @@
             })(ska);
         }
     }
-    */
+
+    
+
+    function getCellClick() {
+        var table = document.getElementById("sTable");
+        var rIndex;
+        var cIndex;
+        // table rows
+        if (table != null) {
+            for (var i = 1; i < table.rows.length; i++) {
+                // row cells
+                for (var j = 0; j < table.rows[i].cells.length; j++) {
+                    table.rows[i].cells[j].onclick = function () {
+                        rIndex = this.parentElement.rowIndex;
+                        cIndex = this.cellIndex + 1;
+                        console.log("Row : " + rIndex + " , Cell : " + cIndex);
+                    };
+                }
+            }
+        }
+        
+
+    }
+
     function getUnitRecommendations(yeah) {
         var labels = [];
         var count = 0;
@@ -306,16 +522,19 @@
             
         var sIter = -1;
         var wIter = -1;
-        var htmlCode = "<table border=1>";
+        var htmlCode = "<table class=" + head + " border=1>";
         htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + head + "</th>";
         htmlCode = htmlCode + "</tr></thead>";
-            
+        htmlCode = htmlCode + "<tbody><div class=tbodyScroll>";
         htmlCode = htmlCode + "<tr>";
         htmlCode = htmlCode + "<th>Strengths</th>";
         htmlCode = htmlCode + "<th>Weaknesses</th>";
         htmlCode = htmlCode + "</tr>";
+        
         while ((sIter < max) && (wIter < max)) {
+            
             htmlCode = htmlCode + "<tr>";
+            
             if (sIter >= sLength) {
                 htmlCode = htmlCode + "<td>" + "" + "</td>";
             }
@@ -356,7 +575,9 @@
                     htmlCode = htmlCode + "<td>" + w[colNames2[0]] + "</td>";
             }
             htmlCode = htmlCode + "</tr>";
+            
         }
+        htmlCode = htmlCode + "</div></tbody>";
         htmlCode = htmlCode + "</table>";
         $(tableName).html("");
         $(tableName).append(htmlCode);  //apend html code to div elemen 
@@ -377,7 +598,7 @@
             arr = m.get(k);
             htmlCode = htmlCode + "<td>";
             for(var i = 0; i < arr.length; i++) {
-                htmlCode = htmlCode + arr[i] + "</br>";
+                htmlCode = htmlCode + arr[i] + "</br></br>";
             }
             htmlCode = htmlCode + "</td>";
             htmlCode = htmlCode + "</tr>";
