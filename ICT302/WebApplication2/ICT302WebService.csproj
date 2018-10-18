@@ -77,10 +77,13 @@
   <ItemGroup>
     <Content Include="FrontEnd\index.html" />
     <Content Include="FrontEnd\JavaScript.js" />
+    <Content Include="Scripts\bootstrap-multiselect.css" />
+    <Content Include="Scripts\bootstrap-multiselect.js" />
     <Content Include="Scripts\Chart.js" />
     <Content Include="Scripts\Chart.min.js" />
     <Content Include="Service1.svc" />
     <Content Include="SQL\CurriculumMapperScript.sql" />
+    <Content Include="SQL\CurriculumMapperScriptv5.sql" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>

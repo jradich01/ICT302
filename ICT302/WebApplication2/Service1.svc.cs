@@ -16,7 +16,7 @@ namespace ICT302WebService
 	public class Service1: IDisposable
 	{
 
-		string conString = "Data Source=MYSERVER\\SQLEXPRESS2014;Initial Catalog=CurriculumMapperv4;Integrated Security=true;";
+		string conString = "Data Source=THEHIVE\\SQLEXPRESS2014;Initial Catalog=CurriculumMapperv5;Integrated Security=true;";
 		SqlConnection con;
 
 
