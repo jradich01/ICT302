@@ -56,6 +56,157 @@
         requestData("DeleteAddedUnits_SP",getChartData)
     });
 
+    $("#sTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
+
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+
+    });
+
+    $("#kTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+
+    });
+
+    $("#aTable").on("click", "td", function () {
+        var course = $("#courseDropdown").val();
+        var content = $(this).text();
+        var count = 0;
+        var isWeakness = $(this).index();
+        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
+        $(this).css('backgroundColor', '#999999');
+
+        if (isWeakness == 0)
+            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+        else
+            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+    });
+
+    function drawSkillTable(ska, ska_desc, course) {
+
+        requestData("NonCourseContributors:" + ska + ":" + course + ",UnitContributors:" + ska + ":" + course, function (data) {
+            var htmlCode = "<table border=1 class=fixed>";
+
+            htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
+            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Description: </td>";
+            htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
+            htmlCode = htmlCode + "</tr>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Units that contributed to this SKA: </td>";
+            const m = new Map();
+            if (data["UnitContributors"].length > 0) {
+                var colNames = Object.keys(data["UnitContributors"][0]);
+                for (var i = 0; i < data["UnitContributors"].length; i++) {
+                    var row = data["UnitContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID)) {
+                        m.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+
+                for (const k of m.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = m.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Units that can FURTHER contribute to this SKA: </td>";
+            const n = new Map();
+            if (data["NonCourseContributors"].length > 0) {
+                var colNames = Object.keys(data["NonCourseContributors"][0]);
+                for (var i = 0; i < data["NonCourseContributors"].length; i++) {
+                    var row = data["NonCourseContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID) && !n.has(unitID)) {
+                        n.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+                for (const k of n.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = n.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "</table>"
+            $("#skillTable").html("");
+            $("#skillTable").append(htmlCode);  //apend html code to div element
+        });
+    }
+
+    function drawWeaknessTable(ska, ska_desc, course) {
+        requestData("NonCourseContributors:" + ska + ":" + course, function (data) {
+            var htmlCode = "<table border=1 class=fixed>";
+
+            htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
+            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>Description: </td>";
+            htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
+            htmlCode = htmlCode + "</tr>";
+            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<td>RECOMMENDED UNITS: </td>";
+            const m = new Map();
+            if (data["NonCourseContributors"].length > 0) {
+                var colNames = Object.keys(data["NonCourseContributors"][0]);
+                for (var i = 0; i < data["NonCourseContributors"].length; i++) {
+                    var row = data["NonCourseContributors"][i];
+                    var unitID = row[colNames[0]];
+                    var unitName = row[colNames[1]];
+                    if (!m.has(unitID)) {
+                        m.set(unitID, unitName);
+                    }
+                }
+                htmlCode = htmlCode + "<td><div class=scrollable>";
+
+                for (const k of m.keys()) {
+                    var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
+                    var title = m.get(k);
+                    htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
+                }
+                htmlCode = htmlCode + "</div></td></tr>";
+
+            }
+            htmlCode = htmlCode + "</table>"
+            $("#skillTable").html("");
+            $("#skillTable").append(htmlCode);  //apend html code to div element
+        });
+    }
 
     //functions 
 
@@ -75,7 +226,6 @@
             drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
             drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
             drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
-            getUnitRecommendations(data["Weakness"]);
         });
 
     }
@@ -248,16 +398,19 @@
 
         var sIter = -1;
         var wIter = -1;
-        var htmlCode = "<table class='table' style='border=1px;'>";
+        var htmlCode = "<table class=" + head + " border=1>";
         htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + head + "</th>";
         htmlCode = htmlCode + "</tr></thead>";
-
+        htmlCode = htmlCode + "<tbody><div class=tbodyScroll>";
         htmlCode = htmlCode + "<tr>";
         htmlCode = htmlCode + "<th>Strengths</th>";
         htmlCode = htmlCode + "<th>Weaknesses</th>";
         htmlCode = htmlCode + "</tr>";
+
         while ((sIter < max) && (wIter < max)) {
+
             htmlCode = htmlCode + "<tr>";
+
             if (sIter >= sLength) {
                 htmlCode = htmlCode + "<td>" + "" + "</td>";
             }
@@ -298,7 +451,9 @@
                     htmlCode = htmlCode + "<td>" + w[colNames2[0]] + "</td>";
             }
             htmlCode = htmlCode + "</tr>";
+
         }
+        htmlCode = htmlCode + "</div></tbody>";
         htmlCode = htmlCode + "</table>";
         $(tableName).html("");
         $(tableName).append(htmlCode);  //apend html code to div elemen 
@@ -344,25 +499,31 @@
     }
 
     function drawUnitTable(m, tableName) {
-        var htmlCode = "<label> Unit Suggestions for missing SKAs </label><table class='table' style='border:1px solid #CCC;width:100%;'>" + "<tr>";           //build html code from cols and data
-        htmlCode = htmlCode + "<th>" + "Unit" + "</th>";
-        htmlCode = htmlCode + "<th>" + "Weakness" + "</th>";
-        htmlCode = htmlCode + "</tr>";
-
+        var htmlCode = "<label> Unit Suggestions for missing SKAs </label>";
+        htmlCode = htmlCode + "<table class='unit' border=1 ; width: 100%>";           //build html code from cols and data
+        htmlCode = htmlCode + "<thead>";
+        
+        htmlCode = htmlCode + "<th>" + "Units      " + "</th>";
+        htmlCode = htmlCode + "<th>" + "Weakness(s)" + "</th>";
+        htmlCode = htmlCode + "</thead>";
+        
+        htmlCode = htmlCode + "<tbody><div class=tbodyScroll>";
         for (const k of m.keys()) {
             var text = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
             htmlCode = htmlCode + "<tr>";
             htmlCode = htmlCode + "<td>" + "<a href=" + text + ">" + k + "</a>" + "</td>";
             var arr = [];
             arr = m.get(k);
-            htmlCode = htmlCode + "<td>";
+            htmlCode = htmlCode + "<td><div class=scrollable>";
+
             for (var i = 0; i < arr.length; i++) {
                 htmlCode = htmlCode + arr[i] + "</br>";
             }
-            htmlCode = htmlCode + "</td>";
+            htmlCode = htmlCode + "</div></td>";
             htmlCode = htmlCode + "</tr>";
         }
-        htmlCode = htmlCode + "</table>"
+        htmlCode = htmlCode + "</div></tbody>";
+        htmlCode = htmlCode + "</table>";
         $(tableName).html("");
         $(tableName).append(htmlCode);  //apend html code to div element 
     }
