@@ -15,8 +15,8 @@ namespace ICT302WebService
 	[AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
 	public class Service1: IDisposable
 	{
-
-		string conString = "Data Source=DESKTOP-IEE3KOD\\SQLEXPRESS01;Initial Catalog=CurriculumMapperv5;Integrated Security=true;";
+		//database connection string
+		string conString = "Data Source=THEHIVE\\SQLEXPRESS2014;Initial Catalog=CurriculumMapperv5;Integrated Security=true;";
 		SqlConnection con;
 
 
@@ -27,7 +27,7 @@ namespace ICT302WebService
 
 		}
 
-		public string makeSQLString(string[] spParams)
+		public string makeSQLString(string[] spParams) //query a stored procedure using supplied parameters
 		{
 			string sql = "EXEC dbo." + spParams[0] + " ";
 			for(int i= 1; i<spParams.Length; i++)

@@ -10719,10 +10719,11 @@ function createResizer(handler) {
 		shrink.scrollLeft = maxSize;
 		shrink.scrollTop = maxSize;
 	};
-	var onScroll = function() {
-		resizer._reset();
-		handler();
-	};
+	//var onScroll = function() {
+	//	resizer._reset();
+	//	handler();
+	//};
+    var onScroll = function () { };
 
 	addEventListener(expand, 'scroll', onScroll.bind(expand, 'expand'));
 	addEventListener(shrink, 'scroll', onScroll.bind(shrink, 'shrink'));

@@ -1,80 +1,85 @@
 ﻿$(function () {
     //todo
-    //titles
-    //fix weakness table
-    //incorperate additions into other tables
-
+    //make pretty
+    //comment code
+    //test cases
+    //instructions 
+    //table ERD update
+    //fix service warning
 
     //startup
 
-    var requestString = "";
+    $("#kTable").hide();
+    $("#sTable").hide();
+    var requestString = "";  // request string for page start 
     requestString = "DeleteAddedUnits_SP,";  //delete added units from table on startup
     requestString += "JobAndSKACount_SP:Application Software Developer:Computer Science,"; //data for chart
     requestString += "JobList_SP,CourseList_SP,"; //job and course list
     requestString += "UnitsNotInDegree_SP:Computer Science,"; //units not in degree list
+    requestString += "UnitsInDegree_SP:Computer Science,";
     requestString += "Strengths:Application Software Developer:Computer Science," //strengths list
     requestString += "Weakness:Application Software Developer:Computer Science" //weakness list
 
-    //requestData("DeleteAddedUnits_SP,JobAndSKACount_SP:Application Software Developer:Computer Science,JobList_SP,CourseList_SP,UnitsNotInDegree_SP:Computer Science",
-    requestData(requestString,
+    var titleArray = ["Included","Not Included"];
+    
+    requestData(requestString,  // get data using request string 
     function (data) {
-        populateTable(data["JobAndSKACount_SP"]);
-        buildChartData(data["JobAndSKACount_SP"]);
+        buildChartData(data["JobAndSKACount_SP"]);  // build charts, populate dropdowns and SKA tables
         populateDropdown("courseDropdown", data["CourseList_SP"], "CourseName");
         populateDropdown("jobDropdown", data["JobList_SP"], "JobName");
-        populateDropdown("otherUnitsDropdown", data["UnitsNotInDegree_SP"], "UnitCode", "UnitDesc");
-        //new
         drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
         drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
         drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
-        getUnitRecommendations(data["Weakness"]);
+        drawSkaTable("Units",data["UnitsInDegree_SP"],data["UnitsNotInDegree_SP"],"#unitTableList",titleArray);
         });
 
     // events
-    $("#courseDropdown").on("change", function () {
-        requestData("DeleteAddedUnits_SP", getChartData);
+
+    $("#jobDropdown").on("change", function () { // job change event 
+        $("#skillTable").html("");
+        requestData("DeleteAddedUnits_SP", getChartData)  //refresh the chart when different job picked
     });
 
-    $("#addUnits").on("click", function () {
-        var stuff = $("#otherUnitsDropdown").val();
+    $("#courseDropdown").on("change", function () { // course change event
+        $("#skillTable").html("");
+        requestData("DeleteAddedUnits_SP", getChartData); //refresh chart when different course picked
+    });
+
+    $("input[type=radio][name=optradio]").change(function () {  // change radio button event 
+        $("#aTable").hide();  // hide all tables and then show appropriate one
+        $("#kTable").hide();
+        $("#sTable").hide();
+        var opt = this.value;
+        if (opt == "Ability")
+            $("#aTable").show();
+        if (opt == "Knowledge")
+            $("#kTable").show();
+        if (opt == "Skill")
+            $("#sTable").show();
+    });
+
+    $("#unitTableList").on("click", "td", function () { // unit click event
+        var clickedUnit = $(this).text();   //add the unit to either the included or not included 
+        var addOrRemove = $(this).index();  //table and then refresh everything 
         var course = $("#courseDropdown").val();
-        var blah = "";
-        $.each(stuff, function (i, val) {
-            blah = blah + val + ";"
+        var job = $("#jobDropdown").val();
+        requestData("AddSelectedUnits_SP:" + clickedUnit + ":" + addOrRemove + ",UnitsInDegree_SP:" + course + ",UnitsNotInDegree_SP:" + course + ",JobAndSKACount_SP:" + job + ":" + course + ",Strengths:" + job + ":" + course + ",Weakness:" + job + ":" + course, function (data) {
+            drawSkaTable("Units", data["UnitsInDegree_SP"], data["UnitsNotInDegree_SP"], "#unitTableList", titleArray);
+            buildChartData(data["JobAndSKACount_SP"]);
+            drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
+            drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
+            drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
         });
-        if (blah.length > 0) {
-            blah = blah.substring(0, blah.length - 1);
-        }
-        requestData("AddSelectedUnits_SP:" + blah, getChartData);
     });
 
-    $("#clearUnits").on("click", function () {
-        requestData("DeleteAddedUnits_SP", getChartData);
-    });
+    $("#sTable").on("click", "td", tableClick); //click events for the SKA tables
+    $("#kTable").on("click", "td", tableClick);
+    $("#aTable").on("click", "td", tableClick);
 
-    $("#jobDropdown").on("change", function () {
-        requestData("DeleteAddedUnits_SP",getChartData)
-    });
 
-    $("#sTable").on("click", "td", function () {
-        var course = $("#courseDropdown").val();
-        var content = $(this).text();
-        var count = 0;
-        var isWeakness = $(this).index();
+    //functions
 
-        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $(this).css('backgroundColor', '#999999');
-
-        if (isWeakness == 0)
-            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
-        else
-            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
-
-    });
-
-    $("#kTable").on("click", "td", function () {
+    function tableClick() {  //table click event listener.  draws either the strength or weakness table
         var course = $("#courseDropdown").val();
         var content = $(this).text();
         var count = 0;
@@ -85,35 +90,19 @@
         $(this).css('backgroundColor', '#999999');
 
         if (isWeakness == 0)
-            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
+            drawSkillTable(content, "Units", course);
         else
-            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
+            drawWeaknessTable(content, "Units", course);
 
-    });
+    }
 
-    $("#aTable").on("click", "td", function () {
-        var course = $("#courseDropdown").val();
-        var content = $(this).text();
-        var count = 0;
-        var isWeakness = $(this).index();
-        $("#sTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $("#kTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $("#aTable").find('td').css({ 'background-color': '#FFFFFF' });
-        $(this).css('backgroundColor', '#999999');
-
-        if (isWeakness == 0)
-            drawSkillTable(content, "Pretend this is a description fuckfuck", course);
-        else
-            drawWeaknessTable(content, "Pretend this is a description fuckfuck", course);
-    });
-
-    function drawSkillTable(ska, ska_desc, course) {
+    function drawSkillTable(ska, ska_desc, course) {  //draws the skill table 
 
         requestData("NonCourseContributors:" + ska + ":" + course + ",UnitContributors:" + ska + ":" + course, function (data) {
             var htmlCode = "<table border=1 class=fixed>";
 
             htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
-            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "</tr></thead>";  //create table header html
             htmlCode = htmlCode + "<tr>";
             htmlCode = htmlCode + "<td>Description: </td>";
             htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
@@ -122,9 +111,9 @@
             htmlCode = htmlCode + "<td>Units that contributed to this SKA: </td>";
             const m = new Map();
             if (data["UnitContributors"].length > 0) {
-                var colNames = Object.keys(data["UnitContributors"][0]);
-                for (var i = 0; i < data["UnitContributors"].length; i++) {
-                    var row = data["UnitContributors"][i];
+                var colNames = Object.keys(data["UnitContributors"][0]); // show selected units that 
+                for (var i = 0; i < data["UnitContributors"].length; i++) { //contain SKA
+                    var row = data["UnitContributors"][i];  
                     var unitID = row[colNames[0]];
                     var unitName = row[colNames[1]];
                     if (!m.has(unitID)) {
@@ -133,7 +122,7 @@
                 }
                 htmlCode = htmlCode + "<td><div class=scrollable>";
 
-                for (const k of m.keys()) {
+                for (const k of m.keys()) { //apply link to unit 
                     var code = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
                     var title = m.get(k);
                     htmlCode = htmlCode + "<a href=" + code + ">" + k + ": " + title + "</a>" + "</br></br>";
@@ -141,7 +130,7 @@
                 htmlCode = htmlCode + "</div></td></tr>";
 
             }
-            htmlCode = htmlCode + "<tr>";
+            htmlCode = htmlCode + "<tr>";  //show units that also contain SKA
             htmlCode = htmlCode + "<td>Units that can FURTHER contribute to this SKA: </td>";
             const n = new Map();
             if (data["NonCourseContributors"].length > 0) {
@@ -174,7 +163,7 @@
             var htmlCode = "<table border=1 class=fixed>";
 
             htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + ska + "</th>";
-            htmlCode = htmlCode + "</tr></thead>";
+            htmlCode = htmlCode + "</tr></thead>";  //build table header information
             htmlCode = htmlCode + "<tr>";
             htmlCode = htmlCode + "<td>Description: </td>";
             htmlCode = htmlCode + "<td>" + ska_desc + "</td>";
@@ -185,7 +174,7 @@
             if (data["NonCourseContributors"].length > 0) {
                 var colNames = Object.keys(data["NonCourseContributors"][0]);
                 for (var i = 0; i < data["NonCourseContributors"].length; i++) {
-                    var row = data["NonCourseContributors"][i];
+                    var row = data["NonCourseContributors"][i];  //show units that contain SKA
                     var unitID = row[colNames[0]];
                     var unitName = row[colNames[1]];
                     if (!m.has(unitID)) {
@@ -208,21 +197,17 @@
         });
     }
 
-    //functions 
 
-
-    function getChartData() {
+    function getChartData() {  //chart refresh function
         var course = $("#courseDropdown").val();
         var job = $("#jobDropdown").val();
         var line = "Strengths:" + job + ":" + course + ",Weakness:" + job + ":" + course; //new
-        requestData("JobAndSKACount_SP:" + job + ":" + course + ",UnitsNotInDegree_SP:"+course, function (data) {
-            populateTable(data["JobAndSKACount_SP"]);
-            buildChartData(data["JobAndSKACount_SP"]);
-            populateDropdown("otherUnitsDropdown", data["UnitsNotInDegree_SP"], "UnitCode", "UnitDesc");
+        requestData("JobAndSKACount_SP:" + job + ":" + course + ",UnitsNotInDegree_SP:"+course+",UnitsInDegree_SP:"+course, function (data) {
+            buildChartData(data["JobAndSKACount_SP"]);  //refresh the chart
+            drawSkaTable("Units", data["UnitsInDegree_SP"], data["UnitsNotInDegree_SP"], "#unitTableList", titleArray);
         });
 
-        //new
-        requestData(line, function (data) {
+        requestData(line, function (data) {  //also refresh the SKA tables
             drawSkaTable("Skill", data["Strengths"], data["Weakness"], "#sTable");
             drawSkaTable("Ability", data["Strengths"], data["Weakness"], "#aTable");
             drawSkaTable("Knowledge", data["Strengths"], data["Weakness"], "#kTable");
@@ -230,17 +215,17 @@
 
     }
 
-    function requestData(tableName, callback) {
+    function requestData(tableName, callback) { //function that handles the database requests
         $.ajax({
             type: "POST",
-            url: "../Service1.svc/DoWork",
+            url: "../Service1.svc/DoWork",  //service function requested
             contentType: "application/json;charset=utf-8",
-            data: JSON.stringify({val:tableName}),
+            data: JSON.stringify({val:tableName}),  // data sent 
             dataType: "json",
             success: function (data) {  //process data in function
                 var dataSet = JSON.parse(data.d);
                 if (callback)
-                    callback(dataSet);
+                    callback(dataSet);  // received data sent to callback function
             },
             error: function (data) {
                 alert(data);
@@ -249,7 +234,7 @@
     }
 
     function populateDropdown(dropDownName, data, valueColumnName,textColumnName) {
-        if (!textColumnName)
+        if (!textColumnName) //populate a dropdown with data
             textColumnName = valueColumnName;
 
         var $dropdown = $("#" + dropDownName);
@@ -259,7 +244,7 @@
         });
     }
 
-    function getChartVal(data, val) {
+    function getChartVal(data, val) { //get a requested chart value
 
         var num = 0;
         for (var i = 0; i < data.length; i++) {
@@ -278,7 +263,7 @@
         return res;
     }
 
-    function buildChartData(data) {
+    function buildChartData(data) { //build array of data that chart uses
         var ds1 = [];  //top part of chart
         var ds2 = [];  //bottom part of chart
 
@@ -312,21 +297,21 @@
         buildChart(ds1, ds2);
     }
 
-    function buildChart(ds1, ds2) {
+    function buildChart(ds1, ds2) {  // build actual chart
 
         var ctx = document.getElementById("myChart").getContext('2d');
         var myChart = new Chart(ctx, {
             type: 'radar',
             data: {
                 labels: ["Knowledge +", "Abilities +", "", "Abilities -", "Knowledge -", "Skills -", "", "Skills +"],
-                datasets: [{
+                datasets: [{  //meta data for top part
                     label: 'SKAs Acquired',
                     data: ds1,
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
                 },
-                    {
+                    {   //meta data for bottom part
                         label: 'SKAs Missing',
                         data: ds2,
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -349,40 +334,13 @@
 
     }
 
-    function fetchInfo(myData, colName) {
-        var labels = [];
-        for (var i = 0; i < myData.length; i++) {
-            labels.push(myData[i][colName]);
-        }
-        return labels;
-    }
-
-    function populateTable(yeah) {
-        var colNames = Object.keys(yeah[0]);  // get column names
-        var htmlCode = "<table><tr>";           //build html code from cols and data
-        for (var i = 0; i < colNames.length; i++) {
-            htmlCode = htmlCode + "<th>" + colNames[i] + "</th>";
-        }
-        htmlCode = htmlCode + "</tr>";
-        for (var i = 0; i < yeah.length; i++) {
-            htmlCode = htmlCode + "<tr>";
-            var row = yeah[i];
-            for (var j = 0; j < colNames.length; j++) {
-                htmlCode = htmlCode + "<td>" + row[colNames[j]] + "</td>";
-            }
-            htmlCode = htmlCode + "</tr>";
-        }
-        htmlCode = htmlCode + "</table>"
-        $("#myTable").html("");
-        $("#myTable").append(htmlCode);  //apend html code to div element
-
-    }
-
-    ///////new 
-
-    function drawSkaTable(head, strengthData, weaknessData, tableName) {
-        var colNames = Object.keys(strengthData[0]);  // get column names
-        var colNames2 = Object.keys(weaknessData[0]);  // get column names
+    function drawSkaTable(head, strengthData, weaknessData, tableName, custTitles) {
+        var colNames;  //make a table from sent data
+        var colNames2;
+        if (strengthData.length > 0)
+            colNames = Object.keys(strengthData[0]);  // get column names
+        if(weaknessData.length > 0)
+            colNames2 = Object.keys(weaknessData[0]);  // get column names
         var max;
         var c;
 
@@ -398,13 +356,19 @@
 
         var sIter = -1;
         var wIter = -1;
-        var htmlCode = "<table class=" + head + " border=1>";
+        var htmlCode = "<table class='" + head + " skaTbl' border=1>";
         htmlCode = htmlCode + "<thead><tr><th colspan=" + 2 + ">" + head + "</th>";
         htmlCode = htmlCode + "</tr></thead>";
         htmlCode = htmlCode + "<tbody><div class=tbodyScroll>";
-        htmlCode = htmlCode + "<tr>";
-        htmlCode = htmlCode + "<th>Strengths</th>";
-        htmlCode = htmlCode + "<th>Weaknesses</th>";
+        htmlCode = htmlCode + "<tr>";   //build table header
+        if (custTitles) {
+            htmlCode += "<th>" + custTitles[0] + "</th>";
+            htmlCode += "<th>" + custTitles[1] + "</th>";
+        }
+        else {
+            htmlCode = htmlCode + "<th>Acquired</th>";
+            htmlCode = htmlCode + "<th>Missing</th>";
+        }
         htmlCode = htmlCode + "</tr>";
 
         while ((sIter < max) && (wIter < max)) {
@@ -459,82 +423,5 @@
         $(tableName).append(htmlCode);  //apend html code to div elemen 
 
     }
-
-    function getUnitRecommendations(yeah) {
-        var labels = [];
-        var count = 0;
-        const m = new Map();
-        var colNames = Object.keys(yeah[0]);
-        for (var i = 0; i < yeah.length; i++) {
-            var row = yeah[i];
-            var ska = row[colNames[0]];
-            (function (var1) {
-                requestData("UnitRecommendations:" + row[colNames[0]], function (data) {
-                    if (data["UnitRecommendations"].length > 0) {
-                        for (var j = 0; j < data["UnitRecommendations"].length; j++) {
-                            var row2 = doStuff(data["UnitRecommendations"], j);
-                            if (m.has(row2)) {
-                                var arr2 = [];
-                                arr2 = m.get(row2);
-
-                                arr2.push(var1);
-                                m.set(row2, arr2);
-                            }
-                            else {
-                                var arr = [];
-                                arr.push(var1);
-                                m.set(row2, arr);
-                            }
-                        }
-
-                    }
-                    count++;
-                    if (count == yeah.length) {
-                        drawUnitTable(m, "#unitTable");
-                    }
-                });
-
-            })(ska);
-        }
-    }
-
-    function drawUnitTable(m, tableName) {
-        var htmlCode = "<label> Unit Suggestions for missing SKAs </label>";
-        htmlCode = htmlCode + "<table class='unit' border=1 ; width: 100%>";           //build html code from cols and data
-        htmlCode = htmlCode + "<thead>";
-        
-        htmlCode = htmlCode + "<th>" + "Units      " + "</th>";
-        htmlCode = htmlCode + "<th>" + "Weakness(s)" + "</th>";
-        htmlCode = htmlCode + "</thead>";
-        
-        htmlCode = htmlCode + "<tbody><div class=tbodyScroll>";
-        for (const k of m.keys()) {
-            var text = "http://handbook.murdoch.edu.au/units/details?unit=" + k + "&year=2019";
-            htmlCode = htmlCode + "<tr>";
-            htmlCode = htmlCode + "<td>" + "<a href=" + text + ">" + k + "</a>" + "</td>";
-            var arr = [];
-            arr = m.get(k);
-            htmlCode = htmlCode + "<td><div class=scrollable>";
-
-            for (var i = 0; i < arr.length; i++) {
-                htmlCode = htmlCode + arr[i] + "</br>";
-            }
-            htmlCode = htmlCode + "</div></td>";
-            htmlCode = htmlCode + "</tr>";
-        }
-        htmlCode = htmlCode + "</div></tbody>";
-        htmlCode = htmlCode + "</table>";
-        $(tableName).html("");
-        $(tableName).append(htmlCode);  //apend html code to div element 
-    }
-
-    function doStuff(yeah, i) {
-        var colNames = Object.keys(yeah[0]);
-        var row = yeah[i];
-        return row[colNames[0]];
-
-    }
-
-
 
 });
