@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -16,7 +17,7 @@ namespace ICT302WebService
 	public class Service1: IDisposable
 	{
 		//database connection string
-		string conString = "Data Source=THEHIVE\\SQLEXPRESS2014;Initial Catalog=CurriculumMapperv5;Integrated Security=true;";
+		string conString = ConfigurationManager.ConnectionStrings["defaultCon"].ConnectionString;
 		SqlConnection con;
 
 
