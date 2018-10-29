@@ -10,7 +10,7 @@
     //startup
 
     $("#kTable").hide();
-    $("#sTable").hide();
+    $("#aTable").hide();
     var requestString = "";  // request string for page start 
     requestString = "DeleteAddedUnits_SP,";  //delete added units from table on startup
     requestString += "JobAndSKACount_SP:Application Software Developer:Computer Science,"; //data for chart
@@ -327,6 +327,9 @@
                     ticks: {
                         beginAtZero: true,
                         max:100
+                    },
+                    pointLabels: {
+                        fontSize:20
                     }
                 }
             }
